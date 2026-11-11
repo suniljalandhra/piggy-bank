@@ -1,0 +1,33 @@
+[package]
+name = "sol-vault"
+version = "0.1.0"
+edition = "2021"
+description = "A personal SOL piggy bank on Solana, written with Pinocchio (learning project)"
+
+[lib]
+# cdylib -> the .so that gets deployed on-chain (built by `cargo build-sbf`)
+# lib    -> lets the integration tests import constants like `ID` and the discriminators
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+# Pinocchio: zero-dependency, zero-copy Solana program framework.
+# In 0.12 the core types are `AccountView` (was `AccountInfo`) and `Address` (was `Pubkey`).
+pinocchio = "0.12"
+# Typed helpers for building System Program CPIs (Transfer, CreateAccount, ...).
+pinocchio-system = "0.7"
+
+# On-chain, `Address::find_program_address` is a cheap syscall. When the crate is
+# compiled for your laptop (e.g. while `cargo test` builds it), there is no syscall,
+# so we turn on the pure-Rust curve25519 implementation instead.
+[target.'cfg(not(target_os = "solana"))'.dependencies]
+solana-address = { version = "2", features = ["curve25519"] }
+
+[dev-dependencies]
+# Mollusk runs your compiled .so inside a lightweight SVM, no validator needed.
+mollusk-svm = "0.17"
+solana-account = "5"
+solana-instruction = "4"
+solana-pubkey = { version = "4.1", features = ["curve25519"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
